@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Finanças Família</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{colors:{primary:{50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',900:'#312e81'}}}}}</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+body{font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(100,116,139,.3);border-radius:4px}
+.phone-frame{box-shadow:0 25px 50px -12px rgba(0,0,0,.4)}
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex items-center justify-center m-0 p-0 overflow-hidden">
+<div class="w-full h-full sm:max-w-md sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 phone-frame bg-slate-950 flex flex-col relative overflow-hidden shadow-2xl">
+<div class="bg-slate-950/80 backdrop-blur-md px-6 py-2.5 flex justify-between items-center text-xs font-semibold text-slate-400 z-30 select-none">
+<span id="current-time">10:54</span>
+<div class="w-20 h-4 bg-slate-800 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-2 hidden sm:block"></div>
+<div class="flex items-center space-x-2">
+<span id="sync-status" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+<span class="text-[10px]" id="sync-label">Aguardando login...</span>
+<div class="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center"><div class="w-full h-full bg-slate-300 rounded-2xs"></div></div>
+</div>
+</div>
+
+<header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3 py-3 flex items-center justify-between z-20 gap-1">
+<div>
+<h1 class="text-sm font-bold text-white flex items-center gap-1.5"><span id="header-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>Finanças Família</h1>
+<div class="text-[10px] text-slate-400 truncate max-w-[110px]" id="user-info-text">Desconectado</div>
+</div>
+<div class="flex items-center gap-1">
+<select id="month-select" class="bg-slate-800 border border-slate-700 text-[11px] font-medium rounded-xl px-1.5 py-1 text-slate-200 focus:outline-none cursor-pointer">
+<option value="0">Jan</option><option value="1">Fev</option><option value="2">Mar</option><option value="3">Abr</option><option value="4">Mai</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ago</option><option value="8">Set</option><option value="9">Out</option><option value="10">Nov</option><option value="11">Dez</option>
+</select>
+<select id="year-select" class="bg-slate-800 border border-slate-700 text-[11px] font-medium rounded-xl px-1.5 py-1 text-slate-200 focus:outline-none cursor-pointer">
+</select>
+<button onclick="handleLogout()" class="bg-slate-800 text-slate-300 p-1.5 rounded-xl border border-slate-700" title="Sair"><i data-lucide="log-out" class="w-3.5 h-3.5"></i></button>
+<button onclick="openAddModal()" class="bg-indigo-600 text-white p-1.5 rounded-xl shadow-lg shadow-indigo-600/30" title="Adicionar"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+</div>
+</header>
+
+<main id="app-content" class="flex-1 overflow-y-auto pb-24 pt-4 px-4 space-y-4">
+</main>
+
+<nav class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 px-1 py-2 flex justify-around items-center z-30 shadow-lg">
+<button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center justify-center w-14 py-1 text-indigo-400 transition"><i data-lucide="pie-chart" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Geral</span></button>
+<button onclick="switchTab('gleyce')" id="nav-gleyce" class="flex flex-col items-center justify-center w-14 py-1 text-slate-400 hover:text-slate-200 transition"><i data-lucide="user" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Dia 5</span></button>
+<button onclick="switchTab('guilherme15')" id="nav-guilherme15" class="flex flex-col items-center justify-center w-14 py-1 text-slate-400 hover:text-slate-200 transition"><i data-lucide="calendar" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Dia 15</span></button>
+<button onclick="switchTab('guilherme30')" id="nav-guilherme30" class="flex flex-col items-center justify-center w-14 py-1 text-slate-400 hover:text-slate-200 transition"><i data-lucide="calendar-check" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Dia 30</span></button>
+<button onclick="switchTab('fixed')" id="nav-fixed" class="flex flex-col items-center justify-center w-14 py-1 text-slate-400 hover:text-slate-200 transition"><i data-lucide="repeat" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Fixas</span></button>
+<button onclick="switchTab('list')" id="nav-list" class="flex flex-col items-center justify-center w-14 py-1 text-slate-400 hover:text-slate-200 transition"><i data-lucide="list-checks" class="w-4 h-4 mb-0.5"></i><span class="text-[9px] font-medium">Contas</span></button>
+</nav>
+
+<!-- Modal Login Google -->
+<div id="login-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+<div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 space-y-5 shadow-2xl text-center">
+<div class="w-14 h-14 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto border border-indigo-500/30">
+<i data-lucide="users" class="w-7 h-7"></i>
+</div>
+<div>
+<h3 class="text-lg font-bold text-white">Finanças Família</h3>
+<p class="text-xs text-slate-400 mt-1">Acesso permitido para Guilherme & Gleyce</p>
+</div>
+<button type="button" onclick="handleGoogleLogin()" id="google-btn" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-3 shadow-lg active:scale-98">
+<svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+Entrar com o Google
+</button>
+<p id="login-error" class="text-xs text-rose-400 hidden text-center"></p>
+</div>
+</div>
+
+<!-- Modal Adicionar -->
+<div id="add-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+<div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+<div class="flex justify-between items-center"><h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5 text-indigo-500"></i>Novo Lançamento</h3><button onclick="toggleModal('add-modal',false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+<form id="transaction-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Ciclo</label><select id="form-cycle" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"><option value="gleyce">Gleyce (Dia 5)</option><option value="guilherme15">Guilherme (Dia 15)</option><option value="guilherme30">Guilherme (Dia 30)</option></select></div>
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Tipo</label><select id="form-type" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"><option value="expense">Despesa</option><option value="income">Receita</option></select></div>
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label><input type="text" id="form-desc" required placeholder="Ex: Aluguel / Internet" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"></div>
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Valor (R$)</label><input type="number" step="0.01" id="form-value" required placeholder="0.00" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"></div>
+
+<div class="flex items-center gap-2 pt-1">
+<input type="checkbox" id="form-is-fixed" class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+<label for="form-is-fixed" class="text-xs font-medium text-slate-300 cursor-pointer flex items-center gap-1.5">
+<i data-lucide="repeat" class="w-3.5 h-3.5 text-indigo-400"></i> Conta Fixa (Repetir nos 24 meses)
+</label>
+</div>
+
+<button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl shadow-lg text-sm mt-2">Salvar</button>
+</form>
+</div>
+</div>
+
+<!-- Modal Editar -->
+<div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+<div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+<div class="flex justify-between items-center"><h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-indigo-500"></i>Editar Lançamento</h3><button onclick="toggleModal('edit-modal',false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+<form id="edit-transaction-form" onsubmit="handleEditSubmit(event)" class="space-y-3">
+<input type="hidden" id="edit-id">
+<input type="hidden" id="edit-cycle-key">
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label><input type="text" id="edit-desc" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"></div>
+<div><label class="block text-xs font-medium text-slate-400 mb-1">Valor (R$)</label><input type="number" step="0.01" id="edit-value" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200"></div>
+<button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl shadow-lg text-sm mt-2">Atualizar</button>
+</form>
+</div>
+</div>
+
+<div id="toast" class="absolute top-16 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl z-50 opacity-0 pointer-events-none flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i><span id="toast-msg">Salvo!</span></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const currentYr = new Date().getFullYear();
+const YEARS = [currentYr - 1, currentYr, currentYr + 1];
+
+window.appState={
+  currentTab: 'overview',
+  selectedYear: currentYr,
+  selectedMonth: new Date().getMonth(),
+  transactions: {},
+  gleycePhoto: null,
+  guilhermePhoto: null
+};
+
+const ALLOWED_EMAILS = ["rstormer12@gmail.com", "gleyceellendama@gmail.com"];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDlXTIljVbzsYUMYb7VGDwBaYc_3S6UpxQ",
+  authDomain: "fin-organize.firebaseapp.com",
+  projectId: "fin-organize",
+  storageBucket: "fin-organize.firebasestorage.app",
+  messagingSenderId: "447694269555",
+  appId: "1:447694269555:web:772742863554c787f9ce06",
+  measurementId: "G-9M44KDM5J5"
+};
+
+let db=null, auth=null, chartInst=null, unsubscribeSnapshot=null;
+
+const ySel = document.getElementById('year-select');
+YEARS.forEach(y => {
+  const opt = document.createElement('option');
+  opt.value = y; opt.innerText = y;
+  if(y === currentYr) opt.selected = true;
+  ySel.appendChild(opt);
+});
+
+setInterval(()=>{const d=new Date(),t=document.getElementById('current-time');if(t)t.innerText=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;},1000);
+window.showToast=m=>{const t=document.getElementById('toast');document.getElementById('toast-msg').innerText=m;t.classList.remove('opacity-0','pointer-events-none');t.classList.add('opacity-100');setTimeout(()=>t.classList.replace('opacity-100','opacity-0'),2500)};
+window.toggleModal=(id,show)=>document.getElementById(id).classList.toggle('hidden',!show);
+
+function getSeed(){
+  let i={};
+  YEARS.forEach(y => {
+    i[y] = {};
+    for(let m=0; m<12; m++) i[y][m]={gleyce:[],guilherme15:[],guilherme30:[]};
+  });
+  return i;
+}
+
+function ensureStructure(data){
+  YEARS.forEach(y => {
+    if(!data[y]) data[y] = {};
+    for(let m=0; m<12; m++){
+      if(!data[y][m]) data[y][m] = {gleyce:[],guilherme15:[],guilherme30:[]};
+      if(!data[y][m].gleyce) data[y][m].gleyce = [];
+      if(!data[y][m].guilherme15) data[y][m].guilherme15 = [];
+      if(!data[y][m].guilherme30) data[y][m].guilherme30 = [];
+    }
+  });
+  return data;
+}
+
+async function initSync(){
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user && ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+      toggleModal('login-modal', false);
+      
+      if (user.photoURL) {
+        const profileKey = user.email.toLowerCase().includes('gleyce') ? 'gleycePhoto' : 'guilhermePhoto';
+        try {
+          const sharedDocRef = doc(db, 'financas_familia', 'dados_compartilhados');
+          await setDoc(sharedDocRef, { [profileKey]: user.photoURL }, { merge: true });
+        } catch(e){}
+      }
+
+      listenDB();
+    } else {
+      if (user) {
+        showLoginError(`O e-mail ${user.email} não tem permissão de acesso.`);
+        signOut(auth);
+      }
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+      toggleModal('login-modal', true);
+      setSyncUI(false, "Não logado");
+    }
+  });
+}
+
+window.handleGoogleLogin = async () => {
+  const provider = new GoogleAuthProvider();
+  const btn = document.getElementById('google-btn');
+  try {
+    btn.disabled = true;
+    document.getElementById('login-error').classList.add('hidden');
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    showLoginError("Erro ao autenticar com o Google.");
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+window.handleLogout = () => {
+  if (confirm("Deseja sair da sua conta Google no app?")) {
+    signOut(auth);
+  }
+};
+
+function showLoginError(msg) {
+  const err = document.getElementById('login-error');
+  err.innerText = msg;
+  err.classList.remove('hidden');
+}
+
+function listenDB(){
+  if(!db) return;
+  const sharedDocRef = doc(db, 'financas_familia', 'dados_compartilhados');
+
+  unsubscribeSnapshot = onSnapshot(sharedDocRef, (ds) => {
+    if(ds.exists()){
+      const data = ds.data();
+      if (data.transactions) window.appState.transactions = ensureStructure(data.transactions);
+      if (data.gleycePhoto) window.appState.gleycePhoto = data.gleycePhoto;
+      if (data.guilhermePhoto) window.appState.guilhermePhoto = data.guilhermePhoto;
+      setSyncUI(true);
+      render();
+    } else {
+      const d = getSeed();
+      window.appState.transactions = d;
+      setDoc(sharedDocRef, { transactions: d, lastUpdated: new Date().toISOString() }).catch(()=>{});
+      setSyncUI(true);
+      render();
+    }
+  }, (err) => {
+    setSyncUI(false, "Sem permissão no Firebase");
+  });
+}
+
+function setSyncUI(on, r = "") {
+  document.getElementById('sync-status').className = `w-2 h-2 rounded-full ${on ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`;
+  document.getElementById('header-dot').className = `w-2.5 h-2.5 rounded-full ${on ? 'bg-emerald-500' : 'bg-amber-500'}`;
+  document.getElementById('sync-label').innerText = on ? "Sincronizado" : (r || "Offline");
+
+  const user = auth?.currentUser;
+  const userInfoText = document.getElementById('user-info-text');
+
+  if (on && user) {
+    if (user.photoURL) {
+      userInfoText.innerHTML = `
+        <div class="flex items-center gap-1.5">
+          <img src="${user.photoURL}" alt="Avatar" class="w-4 h-4 rounded-full border border-indigo-400 object-cover">
+          <span class="truncate max-w-[85px]">${user.displayName || user.email}</span>
+        </div>
+      `;
+    } else {
+      userInfoText.innerText = user.email;
+    }
+  } else {
+    userInfoText.innerText = "Faça Login";
+  }
+}
+
+async function persist(){
+  if(db && auth?.currentUser){
+    try{
+      const sharedDocRef = doc(db, 'financas_familia', 'dados_compartilhados');
+      await setDoc(sharedDocRef, {transactions: window.appState.transactions, updatedAt: new Date().toISOString()}, {merge: true});
+    }catch(e){}
+  }
+}
+
+window.handleFormSubmit=async e=>{
+  e.preventDefault();
+  const c=document.getElementById('form-cycle').value;
+  const t=document.getElementById('form-type').value;
+  const desc=document.getElementById('form-desc').value;
+  const v=parseFloat(document.getElementById('form-value').value);
+  const isFixed=document.getElementById('form-is-fixed').checked;
+
+  const yr = window.appState.selectedYear;
+  const m = window.appState.selectedMonth;
+  const groupKey = isFixed ? 'fixed_' + Date.now() : null;
+
+  if(isFixed) {
+    YEARS.forEach(y => {
+      for(let month = 0; month < 12; month++) {
+        if(!window.appState.transactions[y]) window.appState.transactions[y] = {};
+        if(!window.appState.transactions[y][month]) window.appState.transactions[y][month] = {gleyce:[],guilherme15:[],guilherme30:[]};
+        
+        window.appState.transactions[y][month][c].push({
+          id: 'tx_' + Date.now() + '_' + y + '_' + month,
+          groupKey: groupKey,
+          desc: desc,
+          value: v,
+          type: t,
+          isFixed: true,
+          paid: false
+        });
+      }
+    });
+    showToast('Conta fixa adicionada!');
+  } else {
+    if(!window.appState.transactions[yr][m]) window.appState.transactions[yr][m]={gleyce:[],guilherme15:[],guilherme30:[]};
+    window.appState.transactions[yr][m][c].push({
+      id: 'tx_' + Date.now(),
+      desc: desc,
+      value: v,
+      type: t,
+      isFixed: false,
+      paid: false
+    });
+    showToast('Lançamento salvo!');
+  }
+
+  await persist();
+  render();
+  toggleModal('add-modal', false);
+  document.getElementById('transaction-form').reset();
+};
+
+window.togglePaidStatus = async (c, id) => {
+  const yr = window.appState.selectedYear;
+  const m = window.appState.selectedMonth;
+  const item = window.appState.transactions[yr]?.[m]?.[c]?.find(i => i.id === id);
+  if (item) {
+    item.paid = !item.paid;
+    await persist();
+    render();
+    showToast(item.paid ? 'Conta Paga!' : 'Conta Pendente!');
+  }
+};
+
+window.openEditModal = (c, id) => {
+  const yr = window.appState.selectedYear;
+  const m = window.appState.selectedMonth;
+  const item = window.appState.transactions[yr]?.[m]?.[c]?.find(i => i.id === id);
+  if (item) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-cycle-key').value = c;
+    document.getElementById('edit-desc').value = item.desc;
+    document.getElementById('edit-value').value = item.value;
+    toggleModal('edit-modal', true);
+  }
+};
+
+window.handleEditSubmit = async e => {
+  e.preventDefault();
+  const yr = window.appState.selectedYear;
+  const m = window.appState.selectedMonth;
+  const id = document.getElementById('edit-id').value;
+  const c = document.getElementById('edit-cycle-key').value;
+  const desc = document.getElementById('edit-desc').value;
+  const val = parseFloat(document.getElementById('edit-value').value);
+
+  const item = window.appState.transactions[yr]?.[m]?.[c]?.find(i => i.id === id);
+  if (item) {
+    item.desc = desc;
+    item.value = val;
+    await persist();
+    render();
+    toggleModal('edit-modal', false);
+    showToast('Atualizado!');
+  }
+};
+
+window.deleteTransaction=async(c,id)=>{
+  const yr=window.appState.selectedYear;
+  const m=window.appState.selectedMonth;
+  if(window.appState.transactions[yr]?.[m]?.[c]){
+    window.appState.transactions[yr][m][c]=window.appState.transactions[yr][m][c].filter(i=>i.id!==id);
+    await persist();render();showToast('Excluído!');
+  }
+};
+
+window.deleteFixedGroup=async(groupKey)=>{
+  if(confirm("Deseja remover essa conta fixa de TODOS os anos e meses?")){
+    YEARS.forEach(y => {
+      for(let m=0; m<12; m++){
+        if(window.appState.transactions[y]?.[m]){
+          ['gleyce','guilherme15','guilherme30'].forEach(ck=>{
+            window.appState.transactions[y][m][ck] = window.appState.transactions[y][m][ck].filter(i=>i.groupKey !== groupKey);
+          });
+        }
+      }
+    });
+    await persist();render();showToast('Conta fixa removida de tudo!');
+  }
+};
+
+window.switchTab=id=>{
+  window.appState.currentTab=id;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.replace('text-indigo-400','text-slate-400'));
+  document.getElementById(`nav-${id}`)?.classList.replace('text-slate-400','text-indigo-400');
+  render();
+};
+
+document.getElementById('month-select').addEventListener('change',e=>{window.appState.selectedMonth=parseInt(e.target.value);render();});
+document.getElementById('year-select').addEventListener('change',e=>{window.appState.selectedYear=parseInt(e.target.value);render();});
+window.openAddModal=()=>toggleModal('add-modal',true);
+window.openAddModalWithCycle=c=>{document.getElementById('form-cycle').value=c;openAddModal();};
+
+function calcCycle(yr,m,c){
+  const l=window.appState.transactions[yr]?.[m]?.[c]||[];
+  let inc=0, expTotal=0, expPaid=0, expPending=0;
+  l.forEach(i=>{
+    if(i.type==='income') {
+      inc+=i.value;
+    } else {
+      expTotal+=i.value;
+      if(i.paid) expPaid+=i.value;
+      else expPending+=i.value;
+    }
+  });
+  return {
+    income: inc,
+    expenseTotal: expTotal,
+    expensePaid: expPaid,
+    expensePending: expPending,
+    realBalance: inc - expPaid,
+    projectedBalance: inc - expTotal,
+    list: l
+  };
+}
+
+function calcMonth(yr,m){
+  const g=calcCycle(yr,m,'gleyce'), g15=calcCycle(yr,m,'guilherme15'), g30=calcCycle(yr,m,'guilherme30');
+  const inc = g.income + g15.income + g30.income;
+  const expPaid = g.expensePaid + g15.expensePaid + g30.expensePaid;
+  const expPending = g.expensePending + g15.expensePending + g30.expensePending;
+  const expTotal = g.expenseTotal + g15.expenseTotal + g30.expenseTotal;
+
+  return {
+    income: inc,
+    expensePaid: expPaid,
+    expensePending: expPending,
+    expenseTotal: expTotal,
+    realBalance: inc - expPaid,
+    projectedBalance: inc - expTotal,
+    gleyce: g,
+    guilherme15: g15,
+    guilherme30: g30
+  };
+}
+
+function render(){
+  document.getElementById('month-select').value=window.appState.selectedMonth;
+  document.getElementById('year-select').value=window.appState.selectedYear;
+  const c=document.getElementById('app-content');if(!c)return;c.innerHTML='';
+  const tab=window.appState.currentTab,yr=window.appState.selectedYear,m=window.appState.selectedMonth;
+  if(tab==='overview')renderOverview(c,yr,m);
+  else if(tab==='list')renderList(c,yr,m);
+  else if(tab==='fixed')renderFixed(c);
+  else renderCycle(c,yr,m,tab);
+  if(window.lucide)lucide.createIcons();
+}
+
+function renderOverview(c,yr,m){
+  const d=calcMonth(yr,m),mn=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  
+  const gleyceImg = window.appState.gleycePhoto 
+    ? `<img src="${window.appState.gleycePhoto}" class="w-10 h-10 rounded-xl object-cover border border-pink-500/30">`
+    : `<div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold">G</div>`;
+
+  const guilhermeImg = window.appState.guilhermePhoto 
+    ? `<img src="${window.appState.guilhermePhoto}" class="w-10 h-10 rounded-xl object-cover border border-blue-500/30">`
+    : `<div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">G15</div>`;
+
+  const guilherme30Img = window.appState.guilhermePhoto 
+    ? `<img src="${window.appState.guilhermePhoto}" class="w-10 h-10 rounded-xl object-cover border border-purple-500/30">`
+    : `<div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">G30</div>`;
+
+  c.innerHTML=`<div class="space-y-4">
+  
+  <div class="bg-gradient-to-br from-indigo-900/80 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+    <div class="flex justify-between items-start">
+      <div>
+        <span class="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">Restante do Mês (${mn[m]})</span>
+        <h2 class="text-3xl font-extrabold text-emerald-400 mt-1">R$ ${d.realBalance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</h2>
+        <p class="text-[10px] text-slate-400 mt-0.5">Saldo real descontando apenas o que foi pago</p>
+      </div>
+      <div class="p-2.5 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
+        <i data-lucide="wallet" class="w-5 h-5 text-indigo-400"></i>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 text-center">
+      <div>
+        <span class="text-[9px] text-slate-400 block font-medium">Ganhos</span>
+        <span class="text-xs font-bold text-emerald-400">R$ ${d.income.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      </div>
+      <div class="border-x border-slate-800">
+        <span class="text-[9px] text-slate-400 block font-medium">Gastos Pagos</span>
+        <span class="text-xs font-bold text-rose-400">R$ ${d.expensePaid.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      </div>
+      <div>
+        <span class="text-[9px] text-amber-400 block font-medium">A Pagar</span>
+        <span class="text-xs font-bold text-amber-400">R$ ${d.expensePending.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-3">
+  <div onclick="switchTab('gleyce')" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-pink-500/50"><div class="flex items-center gap-3">${gleyceImg}<div><h4 class="text-xs font-semibold text-white">Gleyce (Dia 5)</h4><p class="text-[11px] text-slate-400">Restante: R$ ${d.gleyce.realBalance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i></div>
+  <div onclick="switchTab('guilherme15')" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-blue-500/50"><div class="flex items-center gap-3">${guilhermeImg}<div><h4 class="text-xs font-semibold text-white">Guilherme (Dia 15)</h4><p class="text-[11px] text-slate-400">Restante: R$ ${d.guilherme15.realBalance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i></div>
+  <div onclick="switchTab('guilherme30')" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-purple-500/50"><div class="flex items-center gap-3">${guilherme30Img}<div><h4 class="text-xs font-semibold text-white">Guilherme (Dia 30)</h4><p class="text-[11px] text-slate-400">Restante: R$ ${d.guilherme30.realBalance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i></div>
+  </div>
+  <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 shadow-xl"><h3 class="text-xs font-semibold text-slate-300 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i>Evolução de ${yr}</h3><div class="h-48 w-full relative"><canvas id="annualChart"></canvas></div></div></div>`;
+  initChart(yr);
+}
+
+function renderCycle(c,yr,m,key){
+  const tot=calcCycle(yr,m,key);
+  const cfg={gleyce:['Gleyce (Dia 5)','Dia 5','user','bg-pink-500/10 text-pink-400 border-pink-500/20'],guilherme15:['Guilherme (Dia 15)','Dia 15','calendar','bg-blue-500/10 text-blue-400 border-blue-500/20'],guilherme30:['Guilherme (Dia 30)','Dia 30','calendar-check','bg-purple-500/10 text-purple-400 border-purple-500/20']}[key];
+  
+  let h=`<div class="space-y-4"><div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl">
+  <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="p-3 rounded-2xl border ${cfg[3]}"><i data-lucide="${cfg[2]}" class="w-6 h-6"></i></div><div><h2 class="text-base font-bold text-white">${cfg[0]}</h2><p class="text-xs text-slate-400">${cfg[1]}</p></div></div><button onclick="openAddModalWithCycle('${key}')" class="bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 p-2 rounded-xl text-xs font-semibold flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add</button></div>
+  
+  <div class="grid grid-cols-3 gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 text-center">
+  <div><span class="text-[10px] text-slate-400 block font-medium">Ganhos</span><span class="text-xs font-bold text-emerald-400">R$ ${tot.income.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+  <div class="border-x border-slate-800"><span class="text-[10px] text-slate-400 block font-medium">Total Contas</span><span class="text-xs font-bold text-rose-400">R$ ${tot.expenseTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+  <div><span class="text-[10px] text-slate-400 block font-medium">Restante</span><span class="text-xs font-bold ${tot.realBalance>=0?'text-emerald-400':'text-rose-400'}">R$ ${tot.realBalance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+  </div></div><div class="space-y-2"><h3 class="text-xs font-semibold text-slate-400 px-1 uppercase">Lançamentos</h3>`;
+  
+  if(tot.list.length===0)h+=`<div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-8 text-center text-slate-500 text-xs">Nenhum lançamento.</div>`;
+  else tot.list.forEach(i=>{
+  const inc=i.type==='income';
+  h+=`<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow">
+    <div class="flex items-center gap-3">
+      ${!inc ? `<input type="checkbox" ${i.paid?'checked':''} onchange="togglePaidStatus('${key}','${i.id}')" class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">` : ''}
+      <div class="w-8 h-8 rounded-xl ${inc?'bg-emerald-500/20 text-emerald-400':'bg-rose-500/20 text-rose-400'} flex items-center justify-center"><i data-lucide="${inc?'arrow-down-left':'arrow-up-right'}" class="w-3.5 h-3.5"></i></div>
+      <div>
+        <h4 class="text-xs font-bold text-white flex items-center gap-1.5">${i.desc} ${i.isFixed?'<span class="bg-indigo-500/20 text-indigo-400 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5"><i data-lucide="repeat" class="w-2.5 h-2.5"></i>Fixa</span>':''}</h4>
+        <span class="text-[10px] ${i.paid?'text-emerald-400 font-semibold':'text-slate-400'}">${inc?'Receita':(i.paid?'PAGO':'Pendente')}</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold ${inc?'text-emerald-400':'text-slate-200'}">${inc?'+':'-'} R$ ${i.value.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      <button onclick="openEditModal('${key}','${i.id}')" class="text-slate-500 hover:text-indigo-400 p-1"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+      <button onclick="deleteTransaction('${key}','${i.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+    </div>
+  </div>`;
+  });
+  c.innerHTML=h+`</div></div>`;
+}
+
+function renderFixed(c){
+  let fixedMap = new Map();
+  YEARS.forEach(y => {
+    for(let m=0; m<12; m++){
+      const monthData = window.appState.transactions[y]?.[m];
+      if(monthData){
+        ['gleyce','guilherme15','guilherme30'].forEach(ck => {
+          (monthData[ck]||[]).forEach(item => {
+            if(item.isFixed && item.groupKey && !fixedMap.has(item.groupKey)){
+              fixedMap.set(item.groupKey, {...item, cycleName: ck==='gleyce'?'Gleyce (Dia 5)':ck==='guilherme15'?'Guilherme (15)':'Guilherme (30)'});
+            }
+          });
+        });
+      }
+    }
+  });
+
+  const fixedList = Array.from(fixedMap.values());
+  let h = `<div class="space-y-4"><div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl"><h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="repeat" class="w-5 h-5 text-indigo-400"></i>Contas Fixas Recorrentes</h2><p class="text-xs text-slate-400 mt-1">Essas contas se repetem nos 24 meses do histórico.</p></div><div class="space-y-2">`;
+  
+  if(fixedList.length === 0) {
+    h += `<div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-8 text-center text-slate-500 text-xs">Nenhuma conta fixa cadastrada.<br>Ao criar um lançamento, marque "Conta Fixa".</div>`;
+  } else {
+    fixedList.forEach(i => {
+      const inc = i.type === 'income';
+      h += `<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl ${inc?'bg-emerald-500/20 text-emerald-400':'bg-indigo-500/20 text-indigo-400'} flex items-center justify-center"><i data-lucide="repeat" class="w-4 h-4"></i></div><div><h4 class="text-xs font-bold text-white">${i.desc}</h4><span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${i.cycleName}</span></div></div><div class="flex items-center gap-3"><span class="text-xs font-bold ${inc?'text-emerald-400':'text-slate-200'}">R$ ${i.value.toLocaleString('pt-BR',{minimumFractionDigits:2})} /mês</span><button onclick="deleteFixedGroup('${i.groupKey}')" title="Excluir de todos os meses" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+    });
+  }
+  c.innerHTML = h + `</div></div>`;
+}
+
+function renderList(c,yr,m){
+  const d=calcMonth(yr,m);
+  const all=[...d.gleyce.list.map(i=>({...i,cN:'Gleyce (Dia 5)',cK:'gleyce'})),...d.guilherme15.list.map(i=>({...i,cN:'Guilherme (15)',cK:'guilherme15'})),...d.guilherme30.list.map(i=>({...i,cN:'Guilherme (30)',cK:'guilherme30'}))];
+  let h=`<div class="space-y-4"><div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl"><h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-400"></i>Contas do Mês</h2></div><div class="space-y-2">`;
+  if(all.length===0)h+=`<div class="text-center py-8 text-slate-500 text-xs">Vazio.</div>`;
+  else all.forEach(i=>{
+  const inc=i.type==='income';
+  h+=`<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow">
+    <div class="flex items-center gap-3">
+      ${!inc ? `<input type="checkbox" ${i.paid?'checked':''} onchange="togglePaidStatus('${i.cK}','${i.id}')" class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">` : ''}
+      <div class="w-8 h-8 rounded-xl ${inc?'bg-emerald-500/20 text-emerald-400':'bg-indigo-500/20 text-indigo-400'} flex items-center justify-center"><i data-lucide="${inc?'trending-up':'credit-card'}" class="w-3.5 h-3.5"></i></div>
+      <div>
+        <h4 class="text-xs font-bold text-white flex items-center gap-1.5">${i.desc} ${i.isFixed?'<span class="bg-indigo-500/20 text-indigo-400 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5"><i data-lucide="repeat" class="w-2.5 h-2.5"></i>Fixa</span>':''}</h4>
+        <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${i.cN} ${i.paid?'(PAGO)':''}</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold ${inc?'text-emerald-400':'text-slate-200'}">R$ ${i.value.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      <button onclick="openEditModal('${i.cK}','${i.id}')" class="text-slate-500 hover:text-indigo-400 p-1"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+      <button onclick="deleteTransaction('${i.cK}','${i.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+    </div>
+  </div>`;
+  });
+  c.innerHTML=h+`</div></div>`;
+}
+
+function initChart(yr){
+  const ctx=document.getElementById('annualChart');if(!ctx)return;
+  const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],ex=[],inc=[];
+  for(let m=0;m<12;m++){const r=calcMonth(yr,m);ex.push(r.expensePaid);inc.push(r.income);}
+  if(chartInst)chartInst.destroy();
+  chartInst=new Chart(ctx,{type:'bar',data:{labels:ms,datasets:[{label:'Ganhos',data:inc,backgroundColor:'rgba(52, 211, 153, 0.6)',borderRadius:4},{label:'Gastos Pagos',data:ex,backgroundColor:'rgba(244, 63, 94, 0.6)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:9}}},y:{grid:{color:'rgba(51, 65, 85, 0.3)'},ticks:{color:'#64748b',font:{size:9}}}}}});
+}
+
+window.addEventListener('DOMContentLoaded',initSync);
+</script>
+</body>
+</html>
